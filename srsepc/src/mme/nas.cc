@@ -247,6 +247,8 @@ bool nas::handle_imsi_attach_request_unknown_ue(uint32_t                        
   // Save attach request type
   nas_ctx->m_emm_ctx.attach_type = attach_req.eps_attach_type;
 
+/*
+
   // Get Authentication Vectors from HSS
   if (!hss->gen_auth_info_answer(nas_ctx->m_emm_ctx.imsi, nas_ctx->m_sec_ctx.k_asme, nas_ctx->m_sec_ctx.autn,
                                  nas_ctx->m_sec_ctx.rand, nas_ctx->m_sec_ctx.xres)) {
@@ -264,18 +266,23 @@ bool nas::handle_imsi_attach_request_unknown_ue(uint32_t                        
   s1ap->add_nas_ctx_to_imsi_map(nas_ctx);
   s1ap->add_nas_ctx_to_mme_ue_s1ap_id_map(nas_ctx);
   s1ap->add_ue_to_enb_set(enb_sri->sinfo_assoc_id, nas_ctx->m_ecm_ctx.mme_ue_s1ap_id);
+*/
 
   // Pack NAS Authentication Request in Downlink NAS Transport msg
   nas_tx = pool->allocate();
-  nas_ctx->pack_authentication_request(nas_tx);
+  //nas_ctx->pack_authentication_request(nas_tx);
+
+  //Pack ATTACH reject message
+  nas_ctx->pack_attach_reject(nas_tx);
+
 
   // Send reply to eNB
   s1ap->send_downlink_nas_transport(nas_ctx->m_ecm_ctx.enb_ue_s1ap_id, nas_ctx->m_ecm_ctx.mme_ue_s1ap_id, nas_tx,
                                     nas_ctx->m_ecm_ctx.enb_sri);
   pool->deallocate(nas_tx);
 
-  nas_log->info("Downlink NAS: Sending Authentication Request\n");
-  nas_log->console("Downlink NAS: Sending Authentication Request\n");
+  nas_log->info("Downlink NAS: Sending ATTACH Reject cause #12\n");
+  nas_log->console("Downlink NAS: Sending ATTACH Reject cause #12\n");
   return true;
 }
 
@@ -750,6 +757,7 @@ bool nas::handle_tracking_area_update_request(uint32_t                m_tmsi,
   hss_interface_nas*  hss  = itf.hss;
   gtpc_interface_nas* gtpc = itf.gtpc;
 
+/*
   uint64_t imsi = s1ap->find_imsi_from_m_tmsi(m_tmsi);
   if (imsi == 0) {
     nas_log->console("Could not find IMSI from M-TMSI. M-TMSI 0x%x\n", m_tmsi);
@@ -764,6 +772,67 @@ bool nas::handle_tracking_area_update_request(uint32_t                m_tmsi,
   sec_ctx_t* sec_ctx = &nas_ctx->m_sec_ctx;
 
   sec_ctx->ul_nas_count++; // Increment the NAS count, not to break the security ctx
+  return true;
+*/
+
+/* Send TAU reject message to UE */
+  srslte::byte_buffer_pool *pool = srslte::byte_buffer_pool::get_instance();
+
+  nas nas_tmp;
+  nas_tmp.m_ecm_ctx.enb_ue_s1ap_id = enb_ue_s1ap_id;
+  nas_tmp.m_ecm_ctx.mme_ue_s1ap_id = s1ap->get_next_mme_ue_s1ap_id();
+  srslte::byte_buffer_t *nas_tx = pool->allocate();
+
+  nas_tmp.pack_tracking_area_update_reject(nas_tx);
+  s1ap->send_downlink_nas_transport(enb_ue_s1ap_id, nas_tmp.m_ecm_ctx.mme_ue_s1ap_id, nas_tx, *enb_sri);
+  pool->deallocate(nas_tx);
+
+  return true;
+
+}
+
+/* TAU Reject Message with cause #9 */
+bool
+nas::pack_tracking_area_update_reject(srslte::byte_buffer_t *nas_buffer)
+{
+  uint8_t emm_cause = LIBLTE_MME_EMM_CAUSE_UE_IDENTITY_CANNOT_BE_DERIVED_BY_THE_NETWORK; // cause #9
+  //uint8_t emm_cause = LIBLTE_MME_EMM_CAUSE_IMPLICITLY_DETACHED; // cause #10
+
+  LIBLTE_MME_TRACKING_AREA_UPDATE_REJECT_MSG_STRUCT ta_update_rej;
+
+  ta_update_rej.t3446_present = true;
+  ta_update_rej.t3446 = 1;
+  ta_update_rej.emm_cause = emm_cause;
+
+  LIBLTE_ERROR_ENUM err = liblte_mme_pack_tracking_area_update_reject_msg(&ta_update_rej, LIBLTE_MME_SECURITY_HDR_TYPE_PLAIN_NAS, 0, (LIBLTE_BYTE_MSG_STRUCT *) nas_buffer);
+  if (err != LIBLTE_SUCCESS) {
+    m_nas_log->error("Error packing Tracking Area Update Reject\n");
+    m_nas_log->console("Error packing TRacking Area Update Reject\n");
+    return false;
+  }
+
+  return true;
+}
+
+
+/* Attach Reject message with cause #12 */
+bool
+nas::pack_attach_reject(srslte::byte_buffer_t *nas_buffer)
+{
+  m_nas_log->info("Packing Attach Reject\n");
+
+  uint8_t emm_cause = LIBLTE_MME_EMM_CAUSE_TRACKING_AREA_NOT_ALLOWED; // cause #12
+
+  LIBLTE_MME_ATTACH_REJECT_MSG_STRUCT attach_rej;
+
+  attach_rej.emm_cause = emm_cause;
+
+  LIBLTE_ERROR_ENUM err = liblte_mme_pack_attach_reject_msg(&attach_rej, (LIBLTE_BYTE_MSG_STRUCT *) nas_buffer);
+  if (err != LIBLTE_SUCCESS) {
+    m_nas_log->error("Error packing Attach Reject\n");
+    m_nas_log->console("Error packing Attach Reject\n");
+    return false;
+  }
   return true;
 }
 

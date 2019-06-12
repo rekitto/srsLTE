@@ -76,4 +76,23 @@ install_file "epc.conf.example"
 install_file "mbms.conf.example"
 install_file "user_db.csv.example"
 
+echo "Copying over enb network config files"
+install_file "enb_ee_1667.conf.example"
+install_file "enb_ee_1811.conf.example"
+install_file "enb_o2_1226.conf.example"
+install_file "enb_o2_6400.conf.example"
+install_file "enb_three_99.conf.example"
+install_file "enb_three_1392.conf.example"
+install_file "enb_vodafone_6300.conf.example"
+
+echo "Copying over epc network config files"
+install_file "epc_ee_1667.conf.example"
+install_file "epc_ee_1811.conf.example"
+install_file "epc_o2_1226.conf.example"
+install_file "epc_o2_6400.conf.example"
+install_file "epc_three_99.conf.example"
+install_file "epc_three_1392.conf.example"
+install_file "epc_vodafone_6300.conf.example"
+
+
 echo "Done."

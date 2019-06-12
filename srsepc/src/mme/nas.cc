@@ -744,6 +744,8 @@ bool nas::handle_tracking_area_update_request(uint32_t                m_tmsi,
                                               nas_if_t                itf,
                                               srslte::log*            nas_log)
 {
+  /* Remove messages
+
   nas_log->info("Tracking Area Update Request -- S-TMSI 0x%x\n", m_tmsi);
   nas_log->console("Tracking Area Update Request -- S-TMSI 0x%x\n", m_tmsi);
   nas_log->info("Tracking Area Update Request -- eNB UE S1AP Id %d\n", enb_ue_s1ap_id);
@@ -751,6 +753,7 @@ bool nas::handle_tracking_area_update_request(uint32_t                m_tmsi,
 
   nas_log->console("Warning: Tracking area update requests are not handled yet.\n");
   nas_log->warning("Tracking area update requests are not handled yet.\n");
+  */
 
   // Interfaces
   s1ap_interface_nas* s1ap = itf.s1ap;

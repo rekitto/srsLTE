@@ -189,8 +189,8 @@ int mbsfn_sf_cfg_list_parser::parse(Setting& root)
   *enabled = true;
   mbsfn_list->resize(len);
 
-  field_asn1_choice_number<mbsfn_sf_cfg_s::sf_alloc_c_> c("subframeAllocation", "subframeAllocationNumFrames",
-                                                          &extract_sf_alloc, &(*mbsfn_list)[0].sf_alloc);
+  field_asn1_choice_number<mbsfn_sf_cfg_s::sf_alloc_c_> c(
+      "subframeAllocation", "subframeAllocationNumFrames", &extract_sf_alloc, &(*mbsfn_list)[0].sf_alloc);
   c.parse(root["mbsfnSubframeConfigList"]);
 
   parser::field<uint8_t> f("radioframeAllocationOffset", &(*mbsfn_list)[0].radioframe_alloc_offset);
@@ -422,8 +422,8 @@ int enb::parse_sib3(std::string filename, sib_type3_s* data)
   sib3.add_subsection(&resel_serving);
   sib_type3_s::cell_resel_serving_freq_info_s_* freqinfo = &data->cell_resel_serving_freq_info;
 
-  resel_serving.add_field(new parser::field<uint8>("s_non_intra_search", &freqinfo->s_non_intra_search,
-                                                   &freqinfo->s_non_intra_search_present));
+  resel_serving.add_field(new parser::field<uint8>(
+      "s_non_intra_search", &freqinfo->s_non_intra_search, &freqinfo->s_non_intra_search_present));
   resel_serving.add_field(new parser::field<uint8>("thresh_serving_low", &freqinfo->thresh_serving_low));
   resel_serving.add_field(new parser::field<uint8>("cell_resel_prio", &freqinfo->cell_resel_prio));
 
@@ -436,8 +436,8 @@ int enb::parse_sib3(std::string filename, sib_type3_s* data)
   intra_freq.add_field(new parser::field<int8>("p_max", &intrafreq->p_max, &intrafreq->p_max_present));
   intra_freq.add_field(
       new parser::field<uint8>("s_intra_search", &intrafreq->s_intra_search, &intrafreq->s_intra_search_present));
-  intra_freq.add_field(make_asn1_enum_number_parser("allowed_meas_bw", &intrafreq->allowed_meas_bw,
-                                                    &intrafreq->allowed_meas_bw_present));
+  intra_freq.add_field(make_asn1_enum_number_parser(
+      "allowed_meas_bw", &intrafreq->allowed_meas_bw, &intrafreq->allowed_meas_bw_present));
   intra_freq.add_field(new parser::field<bool>("presence_ant_port_1", &intrafreq->presence_ant_port1));
   intra_freq.add_field(make_asn1_bitstring_number_parser("neigh_cell_cnfg", &intrafreq->neigh_cell_cfg));
   intra_freq.add_field(new parser::field<uint8>("t_resel_eutra", &intrafreq->t_resel_eutra));
@@ -510,6 +510,64 @@ int enb::parse_sib9(std::string filename, sib_type9_s* data)
     return -1;
   }
 }
+//////////// SIB10 - code structure taken from SIB9 ///////////////////////////
+int enb::parse_sib10(std::string filename, struct sib_type10_s* data)
+{
+  parser::section sib10("sib10");
+
+  sib10.add_field(make_asn1_bitstring_number_parser("msg_id", &data->msg_id));
+  sib10.add_field(make_asn1_bitstring_number_parser("serial_num", &data->serial_num));
+  //sib10.add_field(new parser::field<asn1::uint32_t >>("warning_type", &data->warning_type));
+  sib10.add_field(make_asn1_octstring_number_parser("warning_type", &data->warning_type));
+  //sib10.add_field(new parser::field<std::fixed_octstring>("warning_type", &data->warning_type));
+  //sib10.add_field(new parser::field<asn1::fixed_octstring>("warning_type", &data->warning_type));
+  //sib10.add_field(new parser::field<std::string>("dummy", &data->dummy.to_string()));
+  //sib10.add_field(new parser::field<std::list>("warning_type", &data->warning_type));
+
+  return parser::parse_section(filename, &sib10);
+}
+//////////////////////////////////////////////////////////////////////////////
+
+//////////// SIB11 - code structure taken from SIB9 ///////////////////////////
+int enb::parse_sib11(std::string filename, struct sib_type11_s* data)
+{
+  parser::section sib11("sib11");
+
+  sib11.add_field(make_asn1_bitstring_number_parser("msg_id", &data->msg_id));
+  sib11.add_field(make_asn1_bitstring_number_parser("serial_num", &data->serial_num));
+  sib11.add_field(make_asn1_enum_str_parser("warning_msg_segment_type", &data->warning_msg_segment_type));
+  // Fix statement below: try use the 'new parser::field<>'
+  sib11.add_field(new parser::field<uint8>("warning_msg_segment_num", &data->warning_msg_segment_num));
+  // sib11.add_field(make_asn1_octstring_number_parser("warning_msg_segment_num", &data->warning_msg_segment_num));
+  // sib11.add_field(make_asn1_enum_str_parser("warning_msg_segment", &data->warning_msg_segment));
+  sib11.add_field(make_asn1_octstring_number_parser("data_coding_scheme", &data->data_coding_scheme));
+
+  return parser::parse_section(filename, &sib11);
+}
+//////////////////////////////////////////////////////////////////////////////
+
+//////////// SIB12 - code structure taken from SIB9 //////////////////////////
+int enb::parse_sib12(std::string filename, struct sib_type12_r9_s* data)
+{
+  parser::section sib12("sib12");
+
+  std::string warning_msg_segment_r9;
+  warning_msg_segment_r9[0] = 0x01;
+  
+  //parser::section warning_msg_type_opt("warning_msg_segment_type_r9_opts");
+  //sib12.add_subsection(&warning_msg_type_opt);
+  // warning_msg_type_opt.add_field(make_asn1_enum);
+  sib12.add_field(make_asn1_bitstring_number_parser("msg_id_r9", &data->msg_id_r9));
+  sib12.add_field(make_asn1_bitstring_number_parser("serial_num_r9", &data->serial_num_r9));
+  sib12.add_field(make_asn1_enum_str_parser("warning_msg_segment_type_r9", &data->warning_msg_segment_type_r9));
+  sib12.add_field(new parser::field<uint8>("warning_msg_segment_num_r9", &data->warning_msg_segment_num_r9));
+  sib12.add_field(new parser::field<std::string>("warning_msg_segment_r9", &warning_msg_segment_r9));
+  // sib9.add_field(new parser::field<std::string>("hnb_name", &hnb_name, &name_enabled));
+  sib12.add_field(make_asn1_octstring_number_parser("data_coding_scheme_r9", &data->data_coding_scheme_r9));
+
+  return parser::parse_section(filename, &sib12);
+}
+//////////////////////////////////////////////////////////////////////////////
 
 int enb::parse_sib13(std::string filename, sib_type13_r9_s* data)
 {
@@ -608,10 +666,13 @@ int mbsfn_area_info_list_parser::parse(Setting& root)
 int enb::parse_sibs(all_args_t* args, rrc_cfg_t* rrc_cfg, phy_cfg_t* phy_config_common)
 {
   // FIXME: Leave 0 blank for now
-  sib_type2_s*     sib2  = &rrc_cfg->sibs[1].set_sib2();
-  sib_type3_s*     sib3  = &rrc_cfg->sibs[2].set_sib3();
-  sib_type4_s*     sib4  = &rrc_cfg->sibs[3].set_sib4();
-  sib_type9_s*     sib9  = &rrc_cfg->sibs[8].set_sib9();
+  sib_type2_s* sib2 = &rrc_cfg->sibs[1].set_sib2();
+  sib_type3_s* sib3 = &rrc_cfg->sibs[2].set_sib3();
+  sib_type4_s* sib4 = &rrc_cfg->sibs[3].set_sib4();
+  sib_type9_s* sib9 = &rrc_cfg->sibs[8].set_sib9();
+  sib_type10_s* sib10 = &rrc_cfg->sibs[9].set_sib10();          // ETWS 1 Alert
+  sib_type11_s* sib11 = &rrc_cfg->sibs[10].set_sib11();         // ETWS 2 Alert
+  sib_type12_r9_s* sib12 = &rrc_cfg->sibs[11].set_sib12_v920(); // CMAS Alert
   sib_type13_r9_s* sib13 = &rrc_cfg->sibs[12].set_sib13_v920();
 
   sib_type1_s* sib1 = &rrc_cfg->sib1;
@@ -682,6 +743,28 @@ int enb::parse_sibs(all_args_t* args, rrc_cfg_t* rrc_cfg, phy_cfg_t* phy_config_
     }
   }
 
+  // Generate SIB10 if defined in mapping info
+  if (sib_is_present(sib1->sched_info_list, sib_type_e::sib_type10)) {
+    if (parse_sib10(args->enb_files.sib_config, sib10)) {
+      return -1;
+    }
+  }
+
+
+  // Generate SIB11 if defined in mapping info
+  if (sib_is_present(sib1->sched_info_list, sib_type_e::sib_type11)) {
+    if (parse_sib11(args->enb_files.sib_config, sib11)) {
+      return -1;
+    }
+  }
+
+  // Generate SIB12 if defined in mapping info
+  if (sib_is_present(sib1->sched_info_list, sib_type_e::sib_type12_v920)) {
+    if (parse_sib12(args->enb_files.sib_config, sib12)) {
+      return -1;
+    }
+  }
+
   // Generate SIB9 if defined in mapping info
   if (sib_is_present(sib1->sched_info_list, sib_type_e::sib_type9)) {
     if (parse_sib9(args->enb_files.sib_config, sib9)) {
@@ -726,11 +809,13 @@ int enb::parse_rr(all_args_t* args, rrc_cfg_t* rrc_cfg)
     return SRSLTE_ERROR;
   } else if (args->enb.transmission_mode == 1 && args->enb.nof_ports > 1) {
     ERROR("Invalid number of ports (%d) for transmission mode (%d). Only one antenna port is allowed.\n",
-          args->enb.nof_ports, args->enb.transmission_mode);
+          args->enb.nof_ports,
+          args->enb.transmission_mode);
     return SRSLTE_ERROR;
   } else if (args->enb.transmission_mode > 1 && args->enb.nof_ports != 2) {
     ERROR("The selected number of ports (%d) are insufficient for the selected transmission mode (%d).\n",
-          args->enb.nof_ports, args->enb.transmission_mode);
+          args->enb.nof_ports,
+          args->enb.transmission_mode);
     return SRSLTE_ERROR;
   }
 
@@ -781,8 +866,8 @@ int enb::parse_rr(all_args_t* args, rrc_cfg_t* rrc_cfg)
   mac_cnfg.add_subsection(&ulsch_cnfg);
 
   rrc_cfg->mac_cnfg.ul_sch_cfg.tti_bundling = false;
-  ulsch_cnfg.add_field(make_asn1_enum_number_parser("max_harq_tx", &rrc_cfg->mac_cnfg.ul_sch_cfg.max_harq_tx,
-                                                    &rrc_cfg->mac_cnfg.ul_sch_cfg.max_harq_tx_present));
+  ulsch_cnfg.add_field(make_asn1_enum_number_parser(
+      "max_harq_tx", &rrc_cfg->mac_cnfg.ul_sch_cfg.max_harq_tx, &rrc_cfg->mac_cnfg.ul_sch_cfg.max_harq_tx_present));
   ulsch_cnfg.add_field(make_asn1_enum_number_parser("periodic_bsr_timer",
                                                     &rrc_cfg->mac_cnfg.ul_sch_cfg.periodic_bsr_timer,
                                                     &rrc_cfg->mac_cnfg.ul_sch_cfg.periodic_bsr_timer_present));

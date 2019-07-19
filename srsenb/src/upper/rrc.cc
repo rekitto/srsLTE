@@ -484,6 +484,13 @@ bool rrc::is_paging_opportunity(uint32_t tti, uint32_t *payload_len)
 
   if (paging_rec->paging_record_list.size() > 0) {
     byte_buf_paging.reset();
+    // Testing CMAS Public Warning System messages
+    //asn1::SRSASN_CODE paging_v920_ies_s::pack();
+    //asn1::rrc::paging_v1130_ies_s::pack(asn1::bit_ref &bref);
+    rrc_log->console("CMAS_TEST\n");
+    rrc_log->info("CMAS_TEST\n");
+    //bool cmas_ind_r9_present = true;
+    //asn1::rrc::paging_record_s::pack(asn1::bit_ref &bref);
     asn1::bit_ref bref(byte_buf_paging.msg, byte_buf_paging.get_tailroom());
     pcch_msg.pack(bref);
     byte_buf_paging.N_bytes = (uint32_t)bref.distance_bytes();

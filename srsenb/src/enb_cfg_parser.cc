@@ -528,21 +528,42 @@ int enb::parse_sib10(std::string filename, struct sib_type10_s* data)
 }
 //////////////////////////////////////////////////////////////////////////////
 
-//////////// SIB11 - code structure taken from SIB9 ///////////////////////////
+//////////// SIB11 - code structure taken from SIB9 //////////////////////////
 int enb::parse_sib11(std::string filename, struct sib_type11_s* data)
 {
   parser::section sib11("sib11");
 
+  // data_coding_scheme_present
+  bool data_coding_scheme_present = true;
+  // dyn_octstring variable
+  std::string warning_msg_segment, warning_msg_segment_hex_value;
+
   sib11.add_field(make_asn1_bitstring_number_parser("msg_id", &data->msg_id));
   sib11.add_field(make_asn1_bitstring_number_parser("serial_num", &data->serial_num));
   sib11.add_field(make_asn1_enum_str_parser("warning_msg_segment_type", &data->warning_msg_segment_type));
-  // Fix statement below: try use the 'new parser::field<>'
   sib11.add_field(new parser::field<uint8>("warning_msg_segment_num", &data->warning_msg_segment_num));
   // sib11.add_field(make_asn1_octstring_number_parser("warning_msg_segment_num", &data->warning_msg_segment_num));
   // sib11.add_field(make_asn1_enum_str_parser("warning_msg_segment", &data->warning_msg_segment));
+
+  ///// TESTING dyn_octstring variable which includes message data
+  sib11.add_field(new parser::field<std::string>("warning_msg_segment", &warning_msg_segment));
+  sib11.add_field(new parser::field<std::string>("warning_msg_segment_hex_value", &warning_msg_segment_hex_value));
   sib11.add_field(make_asn1_octstring_number_parser("data_coding_scheme", &data->data_coding_scheme));
 
-  return parser::parse_section(filename, &sib11);
+    // Run parser with single section
+  if (!parser::parse_section(filename, &sib11)) {
+
+      data->data_coding_scheme_present = true;
+      //data->warning_msg_segment.resize(SRSLTE_MIN((uint32_t)warning_msg_segment.size(), 48));
+      //memcpy(data->warning_msg_segment.data(), warning_msg_segment.c_str(), data->warning_msg_segment.size());
+      data->warning_msg_segment.from_string(warning_msg_segment_hex_value);
+
+    return 0;
+  } else {
+    return -1;
+  }
+
+  //return parser::parse_section(filename, &sib11);
 }
 //////////////////////////////////////////////////////////////////////////////
 
@@ -551,8 +572,8 @@ int enb::parse_sib12(std::string filename, struct sib_type12_r9_s* data)
 {
   parser::section sib12("sib12");
 
-  std::string warning_msg_segment_r9;
-  warning_msg_segment_r9[0] = 0x01;
+  bool data_coding_scheme_r9_present;
+  std::string warning_msg_segment_r9, warning_msg_segment_hex_value;
   
   //parser::section warning_msg_type_opt("warning_msg_segment_type_r9_opts");
   //sib12.add_subsection(&warning_msg_type_opt);
@@ -562,10 +583,25 @@ int enb::parse_sib12(std::string filename, struct sib_type12_r9_s* data)
   sib12.add_field(make_asn1_enum_str_parser("warning_msg_segment_type_r9", &data->warning_msg_segment_type_r9));
   sib12.add_field(new parser::field<uint8>("warning_msg_segment_num_r9", &data->warning_msg_segment_num_r9));
   sib12.add_field(new parser::field<std::string>("warning_msg_segment_r9", &warning_msg_segment_r9));
+  sib12.add_field(new parser::field<std::string>("warning_msg_segment_hex_value", &warning_msg_segment_hex_value));
   // sib9.add_field(new parser::field<std::string>("hnb_name", &hnb_name, &name_enabled));
   sib12.add_field(make_asn1_octstring_number_parser("data_coding_scheme_r9", &data->data_coding_scheme_r9));
 
-  return parser::parse_section(filename, &sib12);
+
+    // Run parser with single section
+  if (!parser::parse_section(filename, &sib12)) {
+
+      data->data_coding_scheme_r9_present = true;
+      //data->warning_msg_segment_r9.resize(SRSLTE_MIN((uint32_t)warning_msg_segment_r9.size(), 48));
+      //memcpy(data->warning_msg_segment_r9.data(), warning_msg_segment_r9.c_str(), data->warning_msg_segment_r9.size());
+      data->warning_msg_segment_r9.from_string(warning_msg_segment_hex_value);
+
+    return 0;
+  } else {
+    return -1;
+  }
+
+  //return parser::parse_section(filename, &sib12);
 }
 //////////////////////////////////////////////////////////////////////////////
 
